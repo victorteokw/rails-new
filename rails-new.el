@@ -13,21 +13,21 @@
 ;; M-x rails-new
 ;; for generating rails application.
 
-(defvar rn/last-rails-new-command nil
+(defvar rails-new--last-rails-new-command nil
   "This variable hold last user rails new command.")
 
-(defvar rn/last-rails-dir nil
+(defvar rails-new--last-rails-dir nil
   "This variable hold the dir location of last user created rails app.")
 
 ;; TODO: bug exist.
-(defvar rn/file-re
+(defvar rails-new--file-re
   "^\\s-+\\(?:create\\|exist\\|identical\\|conflict\\|new\\|skip\\)\\s-+\\(.+\\)$")
 
 ;;;###autoload
 (defun rails-new-again ()
   "Retry last rails new command."
   (interactive)
-  (rn/compile))
+  (rails-new--compile))
 ;;;###autoload
 (defun rails-new (dir &optional ruby template
                       skip-gemfile skip-bundle skip-git
@@ -91,55 +91,55 @@
            (if skip-test-unit (insert "--skip-test-unit"))
            (buffer-string)
            )))
-    (setq rn/last-rails-dir dir)
-    (setq rn/last-rails-new-command rails-new-command)
-    (rn/compile)))
+    (setq rails-new--last-rails-dir dir)
+    (setq rails-new--last-rails-new-command rails-new-command)
+    (rails-new--compile)))
 
-(defun rn/compile ()
-  (compile rn/last-rails-new-command 'rails-new-mode))
+(defun rails-new--compile ()
+  (compile rails-new--last-rails-new-command 'rails-new-mode))
 
 (define-derived-mode rails-new-mode compilation-mode
   "Happy coding!"
   "Mode for rails new command."
-  (add-hook 'compilation-filter-hook 'rn/apply-ansi-color-and-generate-link
+  (add-hook 'compilation-filter-hook 'rails-new--apply-ansi-color-and-generate-link
             nil t)
   )
 
-(defun rn/apply-ansi-color-and-generate-link ()
+(defun rails-new--apply-ansi-color-and-generate-link ()
   (read-only-mode)
   (ansi-color-apply-on-region compilation-filter-start (point))
   (message "Called. ! !")
-  (rn/generate-buffer-links (current-buffer))
+  (rails-new--generate-buffer-links (current-buffer))
   (read-only-mode))
 
 
-(defun rn/jump-to-file (button)
-  (let ((the-file (rn/full-file-name (button-label button))))
+(defun rails-new--jump-to-file (button)
+  (let ((the-file (rails-new--full-file-name (button-label button))))
     (if (file-directory-p the-file)
         (dired the-file)
       (find-file the-file))))
 
-(defun rn/file-exists-p (file)
-  (let ((file-name (format "%s/%s" rn/last-rails-dir file)))
+(defun rails-new--file-exists-p (file)
+  (let ((file-name (format "%s/%s" rails-new--last-rails-dir file)))
     (if (file-exists-p file-name) file-name nil)))
 
-(defalias 'rn/full-file-name 'rn/file-exists-p)
+(defalias 'rails-new--full-file-name 'rails-new--file-exists-p)
 
-(defun rn/generate-buffer-links (buffer &optional exit-code)
+(defun rails-new--generate-buffer-links (buffer &optional exit-code)
   (with-current-buffer buffer
     ;; TODO: Remove button if the file not exist anymore.
     ;; This line doesn't work.
     ;;(remove-text-properties 0 (buffer-end) '(mouse-face nil))
     (goto-char 0)
-    (while (re-search-forward rn/file-re (max-char) t)
+    (while (re-search-forward rails-new--file-re (max-char) t)
       ;; TODO: Bug exists. this won't run.
-      (if (rn/file-exists-p
+      (if (rails-new--file-exists-p
            (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
           (make-button
            (match-beginning 1)
            (match-end 1)
            'action
-           'rn/jump-to-file
+           'rails-new--jump-to-file
            'follow-link
            t)))))
 
