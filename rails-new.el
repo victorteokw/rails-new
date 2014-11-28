@@ -13,6 +13,8 @@
 ;; M-x rails-new
 ;; for generating rails application.
 
+;;; Code:
+
 (defvar rails-new--last-rails-new-command nil
   "This variable hold last user rails new command.")
 
