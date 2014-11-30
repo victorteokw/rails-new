@@ -18,8 +18,14 @@
 (defvar rails-new--last-rails-new-command nil
   "This variable hold last user rails new command.")
 
+(defvar rails-new--last-rails-plugin-new-command nil
+  "This variable hold last user rails plugin new command.")
+
 (defvar rails-new--last-rails-dir nil
   "This variable hold the dir location of last user created rails app.")
+
+(defvar rails-new--last-rails-plugin-dir nil
+  "This variable hold the dir location of last user created rails plugin.")
 
 ;; TODO: bug exist.
 (defvar rails-new--file-re
@@ -30,6 +36,7 @@
   "Retry last rails new command."
   (interactive)
   (rails-new--compile))
+
 ;;;###autoload
 (defun rails-new (dir &optional ruby template
                       skip-gemfile skip-bundle skip-git
@@ -97,6 +104,22 @@
     (setq rails-new--last-rails-new-command rails-new-command)
     (rails-new--compile)))
 
+(defun rails-plugin-new (directory arguments)
+  "Create new rails plugin."
+  (interactive (list (read-directory-name "Directory: ")
+                     (read-string "rails plugin new ")))
+  (let ((rails-plugin-new-command
+         (with-temp-buffer
+           (insert "rails plugin new " directory " ")
+           (insert arguments)
+           (buffer-string))))
+    (setq rails-new--last-rails-plugin-dir directory)
+    (setq rails-new--last-rails-plugin-new-command rails-plugin-new-command)
+    (rails-new--plugin-compile)))
+
+(defun rails-new--plugin-compile ()
+  (compile rails-new--last-rails-plugin-new-command 'rails-plugin-new-mode))
+
 (defun rails-new--compile ()
   (compile rails-new--last-rails-new-command 'rails-new-mode))
 
@@ -104,13 +127,15 @@
   "Happy coding!"
   "Mode for rails new command."
   (add-hook 'compilation-filter-hook 'rails-new--apply-ansi-color-and-generate-link
-            nil t)
-  )
+            nil t))
+
+(define-derived-mode rails-plugin-new-mode rails-new-mode
+  "Happy coding!"
+  "Mode for rails plugin new command.")
 
 (defun rails-new--apply-ansi-color-and-generate-link ()
   (read-only-mode)
   (ansi-color-apply-on-region compilation-filter-start (point))
-  (message "Called. ! !")
   (rails-new--generate-buffer-links (current-buffer))
   (read-only-mode))
 
