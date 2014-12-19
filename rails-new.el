@@ -104,6 +104,7 @@
     (setq rails-new--last-rails-new-command rails-new-command)
     (rails-new--compile)))
 
+;;;###autoload
 (defun rails-plugin-new (directory arguments)
   "Create new rails plugin."
   (interactive (list (read-directory-name "Directory: ")
@@ -118,57 +119,84 @@
     (rails-new--plugin-compile)))
 
 (defun rails-new--plugin-compile ()
-  (compile rails-new--last-rails-plugin-new-command 'rails-plugin-new-mode))
+  (if rails-new--last-rails-plugin-new-command
+      (compile rails-new--last-rails-plugin-new-command 'rails-plugin-new-mode)
+    (error "Last rails plugin new command is not exist.")))
 
 (defun rails-new--compile ()
-  (compile rails-new--last-rails-new-command 'rails-new-mode))
+  (if rails-new--last-rails-new-command
+      (compile rails-new--last-rails-new-command 'rails-new-mode)
+    (error "Last rails new command is not exist.")))
 
 (define-derived-mode rails-new-mode compilation-mode
-  "Happy coding!"
+  "Rails new compilation"
   "Mode for rails new command."
-  (add-hook 'compilation-filter-hook 'rails-new--apply-ansi-color-and-generate-link
-            nil t))
+  (add-hook 'compilation-filter-hook
+            (lambda ()
+              (rails-new--apply-ansi-color-and-generate-link
+               "rails new")) nil t))
 
-(define-derived-mode rails-plugin-new-mode rails-new-mode
-  "Happy coding!"
-  "Mode for rails plugin new command.")
+(define-derived-mode rails-plugin-new-mode compilation-mode
+  "Rails plugin new compilation"
+  "Mode for rails plugin new command."
+  (add-hook 'compilation-filter-hook
+            (lambda ()
+              (rails-new--apply-ansi-color-and-generate-link
+               "rails plugin new")) nil t))
 
-(defun rails-new--apply-ansi-color-and-generate-link ()
+(defun rails-new--apply-ansi-color-and-generate-link (link-mode)
   (read-only-mode)
   (ansi-color-apply-on-region compilation-filter-start (point))
-  (rails-new--generate-buffer-links (current-buffer))
+  (rails-new--generate-buffer-links (current-buffer) link-mode)
   (read-only-mode))
 
-
 (defun rails-new--jump-to-file (button)
-  (let ((the-file (rails-new--full-file-name (button-label button))))
+  (let ((the-file (rails-new--file-exists-p (button-label button))))
     (if (file-directory-p the-file)
         (dired the-file)
       (find-file the-file))))
+
+(defun rails-plugin-new--jump-to-file (button)
+  (let ((the-file (rails-plugin-new--file-exists-p (button-label button))))
+    (if (file-directory-p the-file)
+        (dired the-file)
+      (find-file the-file))))
+
+(defun rails-plugin-new--file-exists-p (file)
+  (let ((file-name (format "%s/%s" rails-new--last-rails-plugin-dir file)))
+    (if (file-exists-p file-name) file-name nil)))
 
 (defun rails-new--file-exists-p (file)
   (let ((file-name (format "%s/%s" rails-new--last-rails-dir file)))
     (if (file-exists-p file-name) file-name nil)))
 
-(defalias 'rails-new--full-file-name 'rails-new--file-exists-p)
-
-(defun rails-new--generate-buffer-links (buffer &optional exit-code)
-  (with-current-buffer buffer
-    ;; TODO: Remove button if the file not exist anymore.
-    ;; This line doesn't work.
-    ;;(remove-text-properties 0 (buffer-end) '(mouse-face nil))
-    (goto-char 0)
-    (while (re-search-forward rails-new--file-re (max-char) t)
-      ;; TODO: Bug exists. this won't run.
-      (if (rails-new--file-exists-p
-           (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-          (make-button
-           (match-beginning 1)
-           (match-end 1)
-           'action
-           'rails-new--jump-to-file
-           'follow-link
-           t)))))
+(defun rails-new--generate-buffer-links (buffer link-mode &optional exit-code)
+  (let ((link-function
+         (cond ((string= "rails new" link-mode) 'rails-new--file-exists-p)
+               ((string= "rails plugin new" link-mode)
+                'rails-plugin-new--file-exists-p)))
+        (jump-function
+         (cond ((string= "rails new" link-mode) 'rails-new--jump-to-file)
+               ((string= "rails plugin new" link-mode)
+                'rails-plugin-new--jump-to-file))))
+    (with-current-buffer buffer
+      ;; TODO: Remove button if the file not exist anymore.
+      ;; This line doesn't work.
+      ;;(remove-text-properties 0 (buffer-end) '(mouse-face nil))
+      (goto-char 0)
+      (while (re-search-forward rails-new--file-re (max-char) t)
+        ;; TODO: Bug exists. this won't run.
+        (and
+         (funcall
+          link-function
+          (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+         (make-button
+          (match-beginning 1)
+          (match-end 1)
+          'action
+          jump-function
+          'follow-link
+          t))))))
 
 (provide 'rails-new)
 ;;; rails-new.el ends here
