@@ -9,6 +9,10 @@ Handy emacs command for creating rails application.
 
 Watch [Screencast](https://www.youtube.com/watch?v=oIhjNkAN7iE)
 
+### Updates on Dec 21, 2014:
+Update for rails 4.2.0.
+Remove ``--skip-action-view``, instead of ``--skip-turbolinks``.
+
 ### Updates on Nov 30, 2014:
 Use <kbd>M-x rails-plugin-new</kbd> to generate rails plugin.
 
