@@ -40,7 +40,7 @@
 ;;;###autoload
 (defun rails-new (dir &optional ruby template
                       skip-gemfile skip-bundle skip-git
-                      skip-keeps skip-active-record skip-action-view
+                      skip-keeps skip-active-record skip-turbolinks
                       skip-sprockets skip-spring database
                       js-library skip-js skip-test-unit
                       )
@@ -57,7 +57,7 @@
                      (y-or-n-p "Skip git?") ;; parameter 6
                      (y-or-n-p "Skip keeps?") ;; parameter 7
                      (y-or-n-p "Skip active record?") ;; parameter 8
-                     (y-or-n-p "Skip action view?") ;; parameter 9
+                     (y-or-n-p "Skip turbolinks?") ;; parameter 9
                      (y-or-n-p "Skip sprockets?") ;; parameter 10
                      (y-or-n-p "Skip spring?") ;; parameter 11
                      (if (y-or-n-p "Use default sqlite3 database?")
@@ -91,7 +91,7 @@
            (if skip-git (insert "--skip-git "))
            (if skip-keeps (insert "--skip-keeps "))
            (if skip-active-record (insert "--skip-active-record "))
-           (if skip-action-view (insert "--skip-action-view "))
+           (if skip-turbolinks (insert "--skip-turbolinks "))
            (if skip-sprockets (insert "--skip-sprockets "))
            (if skip-spring (insert "--skip-spring "))
            (if database (insert "--database=" database " "))
